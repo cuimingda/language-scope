@@ -21,10 +21,29 @@
     return !!textNode?.parentElement?.closest("article p");
   }
 
+  function isUserMessagePreWrapTextNode(textNode) {
+    return !!textNode?.parentElement?.closest(".user-message-bubble-color .whitespace-pre-wrap");
+  }
+
+  function shouldApplyScopePattern(textNode, scope) {
+    if (Array.isArray(scope)) {
+      return scope.some((item) => shouldApplyScopePattern(textNode, item));
+    }
+
+    switch (scope) {
+      case "article-p":
+        return isArticleParagraphTextNode(textNode);
+      case "user-message-pre-wrap":
+        return isUserMessagePreWrapTextNode(textNode);
+      default:
+        return false;
+    }
+  }
+
   function getMatchesForNode(text, patterns, textNode) {
     const scopedPatterns = patterns.filter((pattern) => {
-      if (pattern.scope !== "article-p") return true;
-      return isArticleParagraphTextNode(textNode);
+      if (!pattern.scope) return true;
+      return shouldApplyScopePattern(textNode, pattern.scope);
     });
     return findMatches(text, scopedPatterns, textNode);
   }
@@ -50,7 +69,7 @@
 
     patterns.forEach((pattern) => {
       if (pattern.type === "paired") {
-        if (pattern.scope === "article-p" && !isArticleParagraphTextNode(textNode)) {
+        if (pattern.scope && !shouldApplyScopePattern(textNode, pattern.scope)) {
           return;
         }
 
@@ -99,7 +118,7 @@
         return;
       }
 
-      if (pattern.scope === "article-p" && !isArticleParagraphTextNode(textNode)) {
+      if (pattern.scope && !shouldApplyScopePattern(textNode, pattern.scope)) {
         return;
       }
 

@@ -2,7 +2,7 @@ const ARTICLE_SCOPE_KEYWORDS = ["你"];
 const ARTICLE_SCOPE_PAIR_RULES = [
   { left: "不是", right: "而是", separator: "，" }
 ];
-const ARTICLE_SCOPE = "article-p";
+const ARTICLE_SCOPES = ["article-p", "user-message-pre-wrap"];
 const ARTICLE_SCOPE_CLASS = "ls-mark-article-keyword";
 
 function escapeRegex(value) {
@@ -14,7 +14,7 @@ const articleScopePatterns = ARTICLE_SCOPE_KEYWORDS.map((word, index) => ({
   name: `article keyword: ${word}`,
   regex: escapeRegex(word),
   flags: "g",
-  scope: ARTICLE_SCOPE,
+  scope: ARTICLE_SCOPES,
   cssClass: ARTICLE_SCOPE_CLASS
 }));
 
@@ -26,7 +26,7 @@ const articleScopePairPatterns = ARTICLE_SCOPE_PAIR_RULES.map((rule, index) => (
   right: rule.right,
   separator: rule.separator,
   flags: "g",
-  scope: ARTICLE_SCOPE,
+  scope: ARTICLE_SCOPES,
   cssClass: ARTICLE_SCOPE_CLASS
 }));
 
