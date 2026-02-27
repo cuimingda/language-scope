@@ -1,4 +1,7 @@
-const ARTICLE_SCOPE_KEYWORDS = ["不是", "你", "而是"];
+const ARTICLE_SCOPE_KEYWORDS = ["你"];
+const ARTICLE_SCOPE_PAIR_RULES = [
+  { left: "不是", right: "而是", separator: "，" }
+];
 const ARTICLE_SCOPE = "article-p";
 const ARTICLE_SCOPE_CLASS = "ls-mark-article-keyword";
 
@@ -15,9 +18,22 @@ const articleScopePatterns = ARTICLE_SCOPE_KEYWORDS.map((word, index) => ({
   cssClass: ARTICLE_SCOPE_CLASS
 }));
 
+const articleScopePairPatterns = ARTICLE_SCOPE_PAIR_RULES.map((rule, index) => ({
+  id: `article-pair-${index + 1}`,
+  name: `article pair: ${rule.left}${rule.separator}${rule.right}`,
+  type: "paired",
+  left: rule.left,
+  right: rule.right,
+  separator: rule.separator,
+  flags: "g",
+  scope: ARTICLE_SCOPE,
+  cssClass: ARTICLE_SCOPE_CLASS
+}));
+
 // Define your pattern set here and extend as needed.
 window.__languageScopePatterns = [
   ...articleScopePatterns,
+  ...articleScopePairPatterns,
   {
     id: "placeholder-hello",
     name: "hello marker",

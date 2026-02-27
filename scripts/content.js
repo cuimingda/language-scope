@@ -13,6 +13,10 @@
       : [];
   }
 
+  function escapeRegex(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   function isArticleParagraphTextNode(textNode) {
     return !!textNode?.parentElement?.closest("article p");
   }
@@ -22,7 +26,7 @@
       if (pattern.scope !== "article-p") return true;
       return isArticleParagraphTextNode(textNode);
     });
-    return findMatches(text, scopedPatterns);
+    return findMatches(text, scopedPatterns, textNode);
   }
 
   function getMatchRegex(pattern) {
@@ -31,13 +35,76 @@
     return new RegExp(pattern.regex, hasGlobal ? flags : `${flags}g`);
   }
 
-  function findMatches(text, patterns) {
+  function getPairRegex(pattern) {
+    const flags = pattern.flags || "g";
+    const left = escapeRegex(pattern.left || "");
+    const right = escapeRegex(pattern.right || "");
+    const separator = escapeRegex(pattern.separator || "，");
+    const source = `${left}[\\s\\S]*?${separator}[\\s\\S]*?${right}`;
+    const hasGlobal = flags.includes("g");
+    return new RegExp(source, hasGlobal ? flags : `${flags}g`);
+  }
+
+  function findMatches(text, patterns, textNode) {
     const matches = [];
 
     patterns.forEach((pattern) => {
+      if (pattern.type === "paired") {
+        if (pattern.scope === "article-p" && !isArticleParagraphTextNode(textNode)) {
+          return;
+        }
+
+        const left = String(pattern.left || "");
+        const right = String(pattern.right || "");
+        const separator = String(pattern.separator || "，");
+        if (!left || !right) return;
+
+        const regex = getPairRegex(pattern);
+        let hit;
+        while ((hit = regex.exec(text)) !== null) {
+          if (!hit[0]) {
+            regex.lastIndex += 1;
+            continue;
+          }
+
+          const leftLen = left.length;
+          const sepIndex = hit[0].indexOf(separator, leftLen);
+          if (sepIndex < 0) {
+            continue;
+          }
+
+          const rightStart = hit[0].indexOf(right, sepIndex + separator.length);
+          if (rightStart < 0) {
+            continue;
+          }
+
+          matches.push({
+            start: hit.index,
+            end: hit.index + hit[0].length,
+            rule: pattern,
+            ranges: [
+              {
+                start: hit.index,
+                end: hit.index + left.length,
+                text: left
+              },
+              {
+                start: hit.index + rightStart,
+                end: hit.index + rightStart + right.length,
+                text: right
+              }
+            ]
+          });
+        }
+        return;
+      }
+
+      if (pattern.scope === "article-p" && !isArticleParagraphTextNode(textNode)) {
+        return;
+      }
+
       const regex = getMatchRegex(pattern);
       let hit;
-
       while ((hit = regex.exec(text)) !== null) {
         if (!hit[0]) {
           regex.lastIndex += 1;
@@ -67,22 +134,51 @@
     const matches = getMatchesForNode(text, patterns, textNode);
     if (!matches.length) return;
 
+    const ranges = [];
+    matches.forEach((match) => {
+      if (Array.isArray(match.ranges)) {
+        match.ranges.forEach((range) => {
+          ranges.push({
+            start: range.start,
+            end: range.end,
+            text: range.text || text.slice(range.start, range.end),
+            rule: match.rule
+          });
+        });
+        return;
+      }
+
+      ranges.push({
+        start: match.start,
+        end: match.end,
+        text: match.text,
+        rule: match.rule
+      });
+    });
+
+    ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+
     const fragment = document.createDocumentFragment();
     let cursor = 0;
 
-    matches.forEach((match) => {
-      if (match.start > cursor) {
-        fragment.appendChild(document.createTextNode(text.slice(cursor, match.start)));
+    ranges.forEach((range) => {
+      const safeStart = Math.max(range.start, cursor);
+      if (safeStart >= range.end) {
+        return;
+      }
+
+      if (safeStart > cursor) {
+        fragment.appendChild(document.createTextNode(text.slice(cursor, safeStart)));
       }
 
       const span = document.createElement("span");
-      span.className = `${HIGHLIGHT_CLASS} ${match.rule.cssClass || ""}`.trim();
-      span.dataset.languageScopePattern = match.rule.id || "unknown";
-      span.title = `Language Scope: ${match.rule.name || match.rule.id || "pattern"}`;
-      span.textContent = match.text;
+      span.className = `${HIGHLIGHT_CLASS} ${range.rule.cssClass || ""}`.trim();
+      span.dataset.languageScopePattern = range.rule.id || "unknown";
+      span.title = `Language Scope: ${range.rule.name || range.rule.id || "pattern"}`;
+      span.textContent = text.slice(safeStart, range.end);
       fragment.appendChild(span);
 
-      cursor = match.end;
+      cursor = range.end;
     });
 
     if (cursor < text.length) {
