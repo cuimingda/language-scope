@@ -1,4 +1,19 @@
-const ARTICLE_SCOPE_KEYWORDS = ["你"];
+const ARTICLE_SCOPE_KEYWORDS = [
+  "你",
+  "永远",
+  "绝不",
+  "必须",
+  "总是",
+  "必然",
+  "一定",
+  "绝对",
+  "毫无疑问",
+  "只能",
+  "唯一",
+  "从不",
+  "从来",
+  "难道"
+];
 const ARTICLE_SCOPE_PAIR_RULES = [
   { left: "不是", right: "而是", separator: "，" }
 ];
