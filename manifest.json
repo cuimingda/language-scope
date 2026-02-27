@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Language Scope",
+  "version": "0.1.0",
+  "description": "Monitor text on chatgpt.com/c/* and mark matching word patterns.",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["https://chatgpt.com/c/*"],
+  "background": {
+    "service_worker": "background/service.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/c/*"],
+      "js": [
+        "scripts/patterns.js",
+        "scripts/content.js"
+      ],
+      "css": ["styles/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Language Scope",
+    "default_popup": "popup/popup.html"
+  },
+  "options_page": "options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "styles/content.css"
+      ],
+      "matches": ["https://chatgpt.com/c/*"]
+    }
+  ]
+}
