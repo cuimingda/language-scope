@@ -14,6 +14,7 @@
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -39,4 +40,26 @@ article,
 
 .whitespace-pre-wrap {
   white-space: pre-wrap;
+}
+
+.check-output {
+  margin: 8px 0 18px;
+  padding: 12px;
+  border: 1px dashed #cfd8dc;
+  border-radius: 8px;
+  background: #f8fbff;
+  min-height: 28px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.check-output.pass {
+  border-color: #2e7d32;
+  color: #1b5e20;
+}
+
+.check-output.fail {
+  border-color: #d32f2f;
+  color: #b71c1c;
 }

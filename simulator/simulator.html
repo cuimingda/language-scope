@@ -14,7 +14,9 @@
       <div class="controls">
         <button id="runHighlight">Run highlight</button>
         <button id="clearHighlight">Clear highlight</button>
+        <button id="runtimeSelfCheck">Run runtime self-check</button>
       </div>
+      <div id="runtimeSelfCheckOutput" class="check-output" aria-live="polite"></div>
 
       <article>
         <p id="case-article">
@@ -29,6 +31,8 @@
       </div>
     </main>
 
+    <script src="../scripts/highlight-engine.js"></script>
+    <script src="../scripts/highlight-runtime.js"></script>
     <script src="../scripts/patterns.js"></script>
     <script src="simulator.js"></script>
   </body>
