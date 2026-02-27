@@ -12,3 +12,8 @@
   border-bottom: 2px solid #ff9800;
   background: linear-gradient(transparent 60%, rgba(255, 152, 0, 0.16) 60%);
 }
+
+.ls-mark-not {
+  color: #e53935;
+  font-weight: 700;
+}

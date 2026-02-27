@@ -13,6 +13,18 @@
       : [];
   }
 
+  function isArticleParagraphTextNode(textNode) {
+    return !!textNode?.parentElement?.closest("article p");
+  }
+
+  function getMatchesForNode(text, patterns, textNode) {
+    const scopedPatterns = patterns.filter((pattern) => {
+      if (pattern.scope !== "article-p") return true;
+      return isArticleParagraphTextNode(textNode);
+    });
+    return findMatches(text, scopedPatterns);
+  }
+
   function getMatchRegex(pattern) {
     const flags = pattern.flags || "gi";
     const hasGlobal = flags.includes("g");
@@ -52,7 +64,7 @@
   function highlightNode(textNode) {
     const text = textNode.nodeValue || "";
     const patterns = getPatterns();
-    const matches = findMatches(text, patterns);
+    const matches = getMatchesForNode(text, patterns, textNode);
     if (!matches.length) return;
 
     const fragment = document.createDocumentFragment();
