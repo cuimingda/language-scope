@@ -15,7 +15,9 @@ const ARTICLE_SCOPE_KEYWORDS = [
   "难道"
 ];
 const ARTICLE_SCOPE_PAIR_RULES = [
-  { left: "不是", right: "而是", separator: "，" }
+  { left: "不是", right: "而是", separator: "，" },
+  { left: "与其", right: "不如" },
+  { left: "不在于", right: "而在于" }
 ];
 const ARTICLE_SCOPES = ["article-p", "user-message-pre-wrap"];
 const ARTICLE_SCOPE_CLASS = "ls-mark-article-keyword";
