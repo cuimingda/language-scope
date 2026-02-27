@@ -1,13 +1,23 @@
+const ARTICLE_SCOPE_KEYWORDS = ["不是", "你", "而是"];
+const ARTICLE_SCOPE = "article-p";
+const ARTICLE_SCOPE_CLASS = "ls-mark-article-keyword";
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const articleScopePatterns = ARTICLE_SCOPE_KEYWORDS.map((word, index) => ({
+  id: `article-word-${index + 1}`,
+  name: `article keyword: ${word}`,
+  regex: escapeRegex(word),
+  flags: "g",
+  scope: ARTICLE_SCOPE,
+  cssClass: ARTICLE_SCOPE_CLASS
+}));
+
 // Define your pattern set here and extend as needed.
 window.__languageScopePatterns = [
-  {
-    id: "not-word",
-    name: "否定词“不是”",
-    regex: "不是",
-    flags: "g",
-    scope: "article-p",
-    cssClass: "ls-mark-not"
-  },
+  ...articleScopePatterns,
   {
     id: "placeholder-hello",
     name: "hello marker",

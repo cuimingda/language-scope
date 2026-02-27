@@ -13,6 +13,7 @@
   background: linear-gradient(transparent 60%, rgba(255, 152, 0, 0.16) 60%);
 }
 
+.ls-mark-article-keyword,
 .ls-mark-not {
   color: #e53935;
   font-weight: 700;
