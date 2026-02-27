@@ -3,6 +3,9 @@
 
   const HIGHLIGHT_CLASS = "ls-highlight";
   const PATTERN_STATE_KEY = "languageScopeEnabled";
+  const COPY_BUTTON_SELECTOR =
+    'button[data-testid="copy-turn-action-button"][data-state="closed"],' +
+    'button[data-testid="copy-turn-action-button"][aria-label="复制"]';
   let enabled = true;
   let observer = null;
   let pendingScan = false;
@@ -25,6 +28,32 @@
     return !!textNode?.parentElement?.closest(".user-message-bubble-color .whitespace-pre-wrap");
   }
 
+  function getDirectChildContaining(parent, node) {
+    let current = node;
+    while (current && current.parentElement !== parent) {
+      current = current.parentElement;
+      if (!current) return null;
+    }
+    return current?.nodeType === Node.TEXT_NODE ? current.parentElement : current;
+  }
+
+  function isArticleTurnCompleted(textNode) {
+    let current = textNode.parentElement;
+
+    while (current) {
+      const branch = getDirectChildContaining(current, textNode);
+      if (branch) {
+        if (branch.matches?.(COPY_BUTTON_SELECTOR)) return true;
+        if (branch.querySelector?.(COPY_BUTTON_SELECTOR)) return true;
+      }
+
+      if (current.tagName === "ARTICLE") return false;
+      current = current.parentElement;
+    }
+
+    return false;
+  }
+
   function shouldApplyScopePattern(textNode, scope) {
     if (Array.isArray(scope)) {
       return scope.some((item) => shouldApplyScopePattern(textNode, item));
@@ -32,6 +61,7 @@
 
     switch (scope) {
       case "article-p":
+        if (!isArticleTurnCompleted(textNode)) return false;
         return isArticleParagraphTextNode(textNode);
       case "user-message-pre-wrap":
         return isUserMessagePreWrapTextNode(textNode);
