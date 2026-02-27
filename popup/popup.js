@@ -1,5 +1,6 @@
 const statusEl = document.getElementById("status");
 const toggleBtn = document.getElementById("toggle");
+const simulatorBtn = document.getElementById("openSimulator");
 let enabled = true;
 let targetScope = false;
 
@@ -39,6 +40,11 @@ toggleBtn.addEventListener("click", () => {
   enabled = !enabled;
   chrome.runtime.sendMessage({ type: "language-scope-toggle", enabled });
   render();
+});
+
+simulatorBtn.addEventListener("click", () => {
+  const url = chrome.runtime.getURL("simulator/simulator.html");
+  window.open(url, "_blank");
 });
 
 render();

@@ -1,0 +1,42 @@
+.simulator-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.8;
+}
+
+.hint {
+  color: #5a6470;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+button {
+  border: 1px solid #cfd8dc;
+  background: #0b6cff;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+article,
+.user-message-bubble-color {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e5eaf0;
+  border-radius: 10px;
+}
+
+.user-message-bubble-color {
+  background: #f9fbff;
+}
+
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
+}

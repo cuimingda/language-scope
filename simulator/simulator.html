@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Scope Simulator</title>
+    <link rel="stylesheet" href="../styles/content.css" />
+    <link rel="stylesheet" href="simulator.css" />
+  </head>
+  <body>
+    <main class="simulator-page">
+      <h1>Language Scope Highlight Simulator</h1>
+      <p class="hint">This page renders sample sentences with the same highlighting rules.</p>
+      <div class="controls">
+        <button id="runHighlight">Run highlight</button>
+        <button id="clearHighlight">Clear highlight</button>
+      </div>
+
+      <article>
+        <p id="case-article">
+          这不是说安全不重要，而是说在这种框架里，约束机制会被当作“削弱动员能力”的阻碍。
+        </p>
+      </article>
+
+      <div class="user-message-bubble-color">
+        <div class="whitespace-pre-wrap" id="case-user">
+          你这段思考还有一个更高维的延伸：所谓“可追责性与可修复性”，在组织里其实对应两种非常不同的实现方式。
+        </div>
+      </div>
+    </main>
+
+    <script src="../scripts/patterns.js"></script>
+    <script src="simulator.js"></script>
+  </body>
+</html>

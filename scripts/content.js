@@ -88,10 +88,64 @@
     const flags = pattern.flags || "g";
     const left = escapeRegex(pattern.left || "");
     const right = escapeRegex(pattern.right || "");
-    const separator = escapeRegex(pattern.separator || "，");
+    const separator = escapeRegex(pattern.separator || "");
     const source = `${left}[\\s\\S]*?${separator}[\\s\\S]*?${right}`;
     const hasGlobal = flags.includes("g");
     return new RegExp(source, hasGlobal ? flags : `${flags}g`);
+  }
+
+  function findPairRanges(text, pattern) {
+    const left = String(pattern.left || "");
+    const right = String(pattern.right || "");
+    if (!left || !right) return [];
+
+    const separator = String(pattern.separator || "");
+    const pairs = [];
+    const leftLen = left.length;
+    const rightLen = right.length;
+
+    let cursor = 0;
+    while (cursor < text.length) {
+      const leftIndex = text.indexOf(left, cursor);
+      if (leftIndex < 0) break;
+
+      let searchFrom = leftIndex + leftLen;
+      if (separator) {
+        const sepIndex = text.indexOf(separator, searchFrom);
+        if (sepIndex < 0) {
+          cursor = searchFrom;
+          continue;
+        }
+        searchFrom = sepIndex + separator.length;
+      }
+
+      const rightIndex = text.indexOf(right, searchFrom);
+      if (rightIndex < 0) {
+        cursor = searchFrom;
+        continue;
+      }
+
+    pairs.push({
+      start: leftIndex,
+      end: rightIndex + rightLen,
+      ranges: [
+        {
+          start: leftIndex,
+          end: leftIndex + leftLen,
+          text: left
+        },
+        {
+          start: rightIndex,
+          end: rightIndex + rightLen,
+          text: right
+        }
+      ]
+    });
+
+      cursor = rightIndex + rightLen;
+    }
+
+    return pairs;
   }
 
   function findMatches(text, patterns, textNode) {
@@ -103,48 +157,15 @@
           return;
         }
 
-        const left = String(pattern.left || "");
-        const right = String(pattern.right || "");
-        const separator = String(pattern.separator || "，");
-        if (!left || !right) return;
-
-        const regex = getPairRegex(pattern);
-        let hit;
-        while ((hit = regex.exec(text)) !== null) {
-          if (!hit[0]) {
-            regex.lastIndex += 1;
-            continue;
-          }
-
-          const leftLen = left.length;
-          const sepIndex = hit[0].indexOf(separator, leftLen);
-          if (sepIndex < 0) {
-            continue;
-          }
-
-          const rightStart = hit[0].indexOf(right, sepIndex + separator.length);
-          if (rightStart < 0) {
-            continue;
-          }
-
+        const pairRanges = findPairRanges(text, pattern);
+        pairRanges.forEach((pairRange) => {
           matches.push({
-            start: hit.index,
-            end: hit.index + hit[0].length,
+            start: pairRange.start,
+            end: pairRange.end,
             rule: pattern,
-            ranges: [
-              {
-                start: hit.index,
-                end: hit.index + left.length,
-                text: left
-              },
-              {
-                start: hit.index + rightStart,
-                end: hit.index + rightStart + right.length,
-                text: right
-              }
-            ]
+            ranges: pairRange.ranges
           });
-        }
+        });
         return;
       }
 
