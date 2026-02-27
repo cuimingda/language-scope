@@ -58,11 +58,16 @@ function escapePatternToken(raw) {
 }
 
 function createPairedSentence(left, right, separator) {
-  return `这段示例用于验证规则：${left}${String(separator || "")}并且${right}。`;
+  const sep = String(separator || "").trim();
+  if (sep) {
+    return `在复杂议题的推进中，首先会看到关于“${left}”与“${right}”的分歧，但真正有效的结论应当先完成边界定义，才能讨论后续结构化证据；也就是说，重点先放在“${left}，${right}”这个关系上，而不是只停留在表面陈述。`;
+  }
+
+  return `在项目复盘中，${left}并非一句口号，而是决策的入口；真正决定执行质量的，是${right}可持续的复核机制、过程约束与反馈闭环。`;
 }
 
 function createWordSentence(term) {
-  return `这段示例用于验证规则：${term}，请确认它可被命中。`;
+  return `在这段说明中，关键词“${term}”并非被孤立引用，而是嵌在一个完整语境里：当团队对指标口径反复校准时，围绕这个词汇的判断会直接影响到下一步方案的可解释性与可追责性，因此它应被稳定捕获。`;
 }
 
 function getPatternSample(pattern) {
