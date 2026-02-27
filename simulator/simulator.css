@@ -63,3 +63,32 @@ article,
   border-color: #d32f2f;
   color: #b71c1c;
 }
+
+.generated-rules {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.rule-sample {
+  padding: 12px;
+  border: 1px solid #e5eaf0;
+  border-radius: 10px;
+  background: #fcfdff;
+}
+
+.rule-sample h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #2f3a45;
+}
+
+.rule-views {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-views article,
+.rule-views .user-message-bubble-color {
+  margin: 0;
+}

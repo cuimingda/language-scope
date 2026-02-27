@@ -1,5 +1,6 @@
 const HIGHLIGHT_CLASS = "ls-highlight";
 const runtime = window.__languageScopeRuntime;
+const GENERATED_RULES_CONTAINER_ID = "generated-rules";
 
 function getPatterns() {
   return Array.isArray(window.__languageScopePatterns)
@@ -36,6 +37,119 @@ function shouldApplyPatternForTextNode(textNode, pattern) {
   return shouldApplyScopePattern(textNode, pattern.scope);
 }
 
+function escapePatternToken(raw) {
+  if (typeof raw !== "string") {
+    return "";
+  }
+
+  let token = raw.trim();
+  token = token.replace(/^[\^]+|[\$]+$/g, "");
+
+  if (token.startsWith("(") && token.endsWith(")")) {
+    token = token.slice(1, -1);
+  }
+
+  token = token.split("|")[0];
+  token = token.replace(/\[(.*?)\]/g, "$1");
+  token = token.replace(/[+*?{}()]/g, "");
+  token = token.trim();
+
+  return token;
+}
+
+function createPairedSentence(left, right, separator) {
+  return `这段示例用于验证规则：${left}${String(separator || "")}并且${right}。`;
+}
+
+function createWordSentence(term) {
+  return `这段示例用于验证规则：${term}，请确认它可被命中。`;
+}
+
+function getPatternSample(pattern) {
+  if (pattern?.type === "paired") {
+    const left = String(pattern.left || "");
+    const right = String(pattern.right || "");
+    if (!left || !right) {
+      return { tokens: [], sentence: "" };
+    }
+
+    return {
+      tokens: [left, right],
+      sentence: createPairedSentence(left, right, pattern.separator)
+    };
+  }
+
+  if (typeof pattern?.regex === "string") {
+    const token = escapePatternToken(pattern.regex);
+    if (!token) {
+      return { tokens: [], sentence: "" };
+    }
+
+    return {
+      tokens: [token],
+      sentence: createWordSentence(token)
+    };
+  }
+
+  return { tokens: [], sentence: "" };
+}
+
+function buildRuleSample(pattern, index) {
+  const { tokens, sentence } = getPatternSample(pattern);
+  if (!tokens.length || !sentence) {
+    return null;
+  }
+
+  const sample = document.createElement("section");
+  sample.className = "rule-sample";
+  sample.dataset.ruleSample = "true";
+  sample.dataset.ruleId = pattern.id || `pattern-${index + 1}`;
+  sample.dataset.expectedTokens = JSON.stringify(tokens);
+
+  const title = document.createElement("h2");
+  const displayName = pattern.name || pattern.id || `pattern-${index + 1}`;
+  title.textContent = `${index + 1}. ${displayName}`;
+
+  const views = document.createElement("div");
+  views.className = "rule-views";
+
+  const article = document.createElement("article");
+  const articleP = document.createElement("p");
+  articleP.dataset.ruleView = "article-p";
+  articleP.textContent = sentence;
+  article.appendChild(articleP);
+
+  const userWrap = document.createElement("div");
+  userWrap.className = "user-message-bubble-color";
+  const preWrap = document.createElement("div");
+  preWrap.className = "whitespace-pre-wrap";
+  preWrap.dataset.ruleView = "user-message-pre-wrap";
+  preWrap.textContent = sentence;
+  userWrap.appendChild(preWrap);
+
+  views.appendChild(article);
+  views.appendChild(userWrap);
+  sample.appendChild(title);
+  sample.appendChild(views);
+
+  return sample;
+}
+
+function renderRuleSamples() {
+  const container = document.getElementById(GENERATED_RULES_CONTAINER_ID);
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const patterns = getPatterns();
+  patterns.forEach((pattern, index) => {
+    const sample = buildRuleSample(pattern, index);
+    if (sample) {
+      container.appendChild(sample);
+    }
+  });
+}
+
 function clearHighlight(root = document) {
   runtime.clear(root, HIGHLIGHT_CLASS);
 }
@@ -56,12 +170,7 @@ function run() {
 
 function collectSpanTextsInContainer(container) {
   if (!container) return [];
-  return Array.from(container.querySelectorAll("span"))
-    .map((node) => node.textContent || "");
-}
-
-function hasSpanWithText(container, text) {
-  return collectSpanTextsInContainer(container).includes(text);
+  return Array.from(container.querySelectorAll("span")).map((node) => node.textContent || "");
 }
 
 function setCheckOutput(html, isPass) {
@@ -78,33 +187,59 @@ function runRuntimeSelfCheck() {
     clearHighlight(root || document);
     scanAndHighlight(root || document.body);
 
-    const articleCase = document.getElementById("case-article");
-    const userCase = document.getElementById("case-user");
+    const samples = Array.from(document.querySelectorAll('[data-rule-sample="true"]'));
+    const checks = [];
+    let allPass = true;
 
-    const articleTextInSpans = collectSpanTextsInContainer(articleCase);
-
-    const checks = [
-      {
-        name: "文章句子应标记 '不是' + '而是'。",
-        pass: hasSpanWithText(articleCase, "不是") && hasSpanWithText(articleCase, "而是")
-      },
-      {
-        name: "文章句子应有 2 个配对关键词高亮。",
-        pass: articleTextInSpans.filter((text) => text === "不是" || text === "而是").length >= 2
-      },
-      {
-        name: "用户消息应标记 '你'。",
-        pass: hasSpanWithText(userCase, "你")
+    samples.forEach((sample) => {
+      let expected = [];
+      try {
+        expected = JSON.parse(sample.dataset.expectedTokens || "[]");
+      } catch (_error) {
+        expected = [];
       }
-    ];
 
-    const failure = checks.filter((check) => !check.pass).map((check) => `- ${check.name}`).join("\n");
-    const isPass = !failure;
+      const articleView = sample.querySelector('[data-rule-view="article-p"]');
+      const userView = sample.querySelector('[data-rule-view="user-message-pre-wrap"]');
 
-    if (isPass) {
-      setCheckOutput("runtime self-check: PASS\n" + checks.map((check) => `- ${check.name} ✓`).join("\n"), true);
+      const articleTexts = collectSpanTextsInContainer(articleView);
+      const userTexts = collectSpanTextsInContainer(userView);
+
+      const articlePass = expected.every((token) => articleTexts.includes(token));
+      const userPass = expected.every((token) => userTexts.includes(token));
+
+      const expectedLabel = sample.dataset.ruleId || "unknown";
+      const articleTextMatched = articleTexts.filter((text) => expected.includes(text)).join(", ");
+      const userTextMatched = userTexts.filter((text) => expected.includes(text)).join(", ");
+      const expectText = expected.join(", ");
+
+      checks.push({
+        name: `${expectedLabel}: article 覆盖`,
+        pass: articlePass,
+        details: `expect: ${expectText} | actual: ${articleTextMatched}`
+      });
+
+      checks.push({
+        name: `${expectedLabel}: pre-wrap 覆盖`,
+        pass: userPass,
+        details: `expect: ${expectText} | actual: ${userTextMatched}`
+      });
+
+      if (!articlePass || !userPass) {
+        allPass = false;
+      }
+    });
+
+    if (allPass) {
+      setCheckOutput(
+        `runtime self-check: PASS\n${checks.map((check) => `- ${check.name} ✓`).join("\n")}`,
+        true
+      );
     } else {
-      setCheckOutput("runtime self-check: FAIL\n" + failure, false);
+      setCheckOutput(
+        `runtime self-check: FAIL\n${checks.filter((check) => !check.pass).map((check) => `- ${check.name} (${check.details})`).join("\n")}`,
+        false
+      );
     }
   } catch (error) {
     setCheckOutput(`runtime self-check: EXCEPTION\n${error && error.message ? error.message : String(error)}`, false);
@@ -118,5 +253,14 @@ document.getElementById("clearHighlight").addEventListener("click", () => {
 });
 document.getElementById("runtimeSelfCheck").addEventListener("click", runRuntimeSelfCheck);
 
-run();
-runRuntimeSelfCheck();
+function bootstrap() {
+  renderRuleSamples();
+  run();
+  runRuntimeSelfCheck();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap, { once: true });
+} else {
+  bootstrap();
+}
